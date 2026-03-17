@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Expense</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #f5f5f5;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            border: 2px solid black;
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .header {
+            padding: 15px;
+            border-bottom: 2px solid black;
+            font-weight: bold;
+        }
+
+        .form-content {
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid black;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            background: white;
+        }
+
+        input:focus,
+        select:focus {
+            outline: 2px solid black;
+            outline-offset: 2px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: black;
+            color: white;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #333;
+        }
+
+        button:active {
+            background: #000;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid black;
+            display: none;
+            position: relative;
+            padding-right: 40px;
+            /* Make room for close button */
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            padding: 5px;
+            background: transparent;
+            color: black;
+            border: 1px solid black;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .close-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+        }
+
+        .message.error {
+            background: #ffebee;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">Log Expense</div>
+        <div class="form-content">
+            <form id="expenseForm">
+                <div class="form-group">
+                    <label for="description">Description:</label>
+                    <input type="text" id="description" name="description" required placeholder="Coffee with friends">
+                </div>
+
+                <div class="form-group">
+                    <label for="category">Category:</label>
+                    <input type="text" id="category" name="category" list="categories" required
+                        placeholder="Start typing...">
+                    <datalist id="categories">
+                        <option value="Eating out">
+                        <option value="Groceries">
+                        <option value="Transportation">
+                        <option value="Utilities">
+                        <option value="Entertainment">
+                        <option value="Healthcare">
+                        <option value="Household">
+                        <option value="Clothing">
+                        <option value="Other">
+                    </datalist>
+                </div>
+
+                <div class="form-group">
+                    <label for="amount">Amount (₪):</label>
+                    <input type="number" id="amount" name="amount" step="0.01" required placeholder="50">
+                </div>
+
+                <button type="submit">Submit</button>
+
+                <div id="message" class="message">
+                    <span id="messageText"></span>
+                    <button type="button" id="closeMessage" class="close-btn">✕</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('expenseForm');
+        const messageDiv = document.getElementById('message');
+        const messageText = document.getElementById('messageText');
+        const closeBtn = document.getElementById('closeMessage');
+
+        // Close button handler
+        closeBtn.addEventListener('click', () => {
+            messageDiv.style.display = 'none';
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                description: document.getElementById('description').value,
+                category: document.getElementById('category').value,
+                amount: parseFloat(document.getElementById('amount').value)
+            };
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000/submit-expense', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageText.textContent = result.message;
+                    messageDiv.className = 'message success';
+                    messageDiv.style.display = 'block';
+                    form.reset();
+
+                    // Auto-hide after 5 seconds
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 5000);
+                } else {
+                    throw new Error('Failed to log expense');
+                }
+            } catch (error) {
+                messageText.textContent = `✗ Error: ${error.message}`;
+                messageDiv.className = 'message error';
+                messageDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+
+</html>
